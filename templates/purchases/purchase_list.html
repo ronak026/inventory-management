@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Purchase Orders{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">Purchase Orders</h1>
+  {% if user.can_manage_inventory %}
+  <a href="{% url 'purchases:add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Purchase Order</a>
+  {% endif %}
+</div>
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input w-64" placeholder="PO number…">
+    <select name="status" class="form-select w-48">
+      <option value="">All statuses</option>
+      {% for value, label in statuses %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-outline">Filter</button>
+    <a href="{% url 'purchases:list' %}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr><th class="table-th">PO #</th><th class="table-th">Supplier</th><th class="table-th">Date</th><th class="table-th">Status</th><th class="table-th text-right">Total</th><th class="table-th text-right">Actions</th></tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for o in orders %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td"><a href="{% url 'purchases:detail' o.pk %}" class="font-medium text-brand-700 hover:underline">{{ o.po_number }}</a></td>
+          <td class="table-td">{{ o.supplier.name }}</td>
+          <td class="table-td text-xs">{{ o.order_date|date:"d M Y" }}</td>
+          <td class="table-td">
+            {% if o.status == 'received' %}<span class="badge bg-emerald-100 text-emerald-700">Received</span>
+            {% elif o.status == 'cancelled' %}<span class="badge bg-red-100 text-red-700">Cancelled</span>
+            {% elif o.status == 'ordered' %}<span class="badge bg-sky-100 text-sky-700">Ordered</span>
+            {% elif o.status == 'partial' %}<span class="badge bg-amber-100 text-amber-700">Partial</span>
+            {% else %}<span class="badge bg-gray-100 text-gray-600">Draft</span>{% endif %}
+          </td>
+          <td class="table-td text-right">{{ o.total_amount|intcomma }}</td>
+          <td class="table-td text-right"><a href="{% url 'purchases:detail' o.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No purchase orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

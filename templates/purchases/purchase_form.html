@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{% if order %}Edit{% else %}New{% endif %} Purchase Order{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <a href="{% url 'purchases:list' %}" class="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><i class="bi bi-arrow-left"></i> Back to purchase orders</a>
+  <form method="post" novalidate class="form-auto">
+    {% csrf_token %}
+    <div class="form-card mb-5">
+      <div class="form-card-header">
+        <div class="form-card-icon"><i class="bi bi-cart-plus"></i></div>
+        <div>
+          <h1 class="text-lg font-semibold text-gray-900">{% if order %}Edit Purchase Order{% else %}New Purchase Order{% endif %}</h1>
+          <p class="text-sm text-gray-500">Order header and supplier details.</p>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="grid grid-cols-1 gap-x-5 md:grid-cols-3">
+          {% include "partials/field.html" with field=form.po_number %}
+          {% include "partials/field.html" with field=form.supplier %}
+          {% include "partials/field.html" with field=form.status %}
+          {% include "partials/field.html" with field=form.order_date %}
+          {% include "partials/field.html" with field=form.expected_date %}
+        </div>
+        {% include "partials/field.html" with field=form.notes %}
+      </div>
+    </div>
+
+    <div class="form-card mb-5">
+      <div class="form-card-header">
+        <div class="form-card-icon"><i class="bi bi-list-ul"></i></div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Line Items</h2>
+          <p class="text-sm text-gray-500">Products to order. Total is calculated on save.</p>
+        </div>
+      </div>
+      <div class="form-section">
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{{ formset.non_form_errors }}</div>{% endif %}
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="border-b border-gray-100">
+                <th class="table-th" style="width:45%">Product</th>
+                <th class="table-th">Quantity</th>
+                <th class="table-th">Unit Price</th>
+                {% if order %}<th class="table-th text-center">Remove</th>{% endif %}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="po-items-body">
+              {% for itemform in formset %}
+              <tr class="align-top">
+                {{ itemform.id }}
+                <td class="py-2 pr-2">{{ itemform.product }}{% for e in itemform.product.errors %}<p class="field-error">{{ e }}</p>{% endfor %}</td>
+                <td class="px-2 py-2">{{ itemform.quantity }}{% for e in itemform.quantity.errors %}<p class="field-error">{{ e }}</p>{% endfor %}</td>
+                <td class="px-2 py-2">{{ itemform.unit_price }}{% for e in itemform.unit_price.errors %}<p class="field-error">{{ e }}</p>{% endfor %}</td>
+                {% if order %}<td class="py-3 pl-2 text-center">{% if itemform.instance.pk %}{{ itemform.DELETE }}{% else %}<span class="text-xs text-gray-400">—</span>{% endif %}</td>{% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {# Empty-form blueprint cloned by the Add row button #}
+        <template id="po-empty-row">
+          <tr class="align-top">
+            <td class="py-2 pr-2">{{ formset.empty_form.product }}</td>
+            <td class="px-2 py-2">{{ formset.empty_form.quantity }}</td>
+            <td class="px-2 py-2">{{ formset.empty_form.unit_price }}</td>
+            {% if order %}<td class="py-3 pl-2 text-center"><span class="text-xs text-gray-400">—</span></td>{% endif %}
+          </tr>
+        </template>
+
+        <div class="mt-3 flex items-center justify-between">
+          <button type="button" id="po-add-row" class="btn btn-outline btn-sm"><i class="bi bi-plus-lg"></i> Add row</button>
+          <p class="text-xs text-gray-500"><i class="bi bi-info-circle"></i> Leave a row's product empty to skip it.</p>
+        </div>
+      </div>
+      <div class="form-actions">
+        <a href="{% url 'purchases:list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Purchase Order</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var tbody = document.getElementById('po-items-body');
+    var tpl = document.getElementById('po-empty-row');
+    var addBtn = document.getElementById('po-add-row');
+    var total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+    if (!tbody || !tpl || !addBtn || !total) return;
+    addBtn.addEventListener('click', function () {
+      var idx = parseInt(total.value, 10);
+      var html = tpl.innerHTML.replace(/__prefix__/g, idx);
+      var holder = document.createElement('tbody');
+      holder.innerHTML = html.trim();
+      tbody.appendChild(holder.querySelector('tr'));
+      total.value = idx + 1;
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+/* Minimal custom CSS — Tailwind (Play CDN) handles layout and components.
+   Only a few things Tailwind/Alpine need at load time live here. */
+
+/* Hide Alpine-controlled elements before Alpine initializes (prevents flicker). */
+[x-cloak] { display: none !important; }
+
+/* Smooth, thin scrollbars for in-card scroll regions. */
+.max-h-80::-webkit-scrollbar { width: 6px; }
+.max-h-80::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }

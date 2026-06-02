@@ -1,0 +1,27 @@
+# Core
+# Django 6.0 + DRF 3.17 are required for Python 3.14 support.
+# (On Python 3.12/3.13 you may instead pin Django==5.1.4 / DRF==3.15.2.)
+Django==6.0.5
+djangorestframework==3.17.1
+django-filter==24.3
+# psycopg 3 — Django 5 supports it natively and it ships wheels for Python 3.13/3.14.
+# (On Python <=3.12 you may instead use: psycopg2-binary==2.9.10)
+psycopg[binary]==3.2.13
+python-dotenv==1.0.1
+
+# UI: Tailwind CSS (Play CDN) + Alpine.js are loaded from a CDN in templates,
+# so no Python UI/form packages are required.
+
+# Reports / Export
+openpyxl==3.1.5
+reportlab==4.2.5
+
+# Imaging — required by ImageField (product image, avatar) and reportlab
+Pillow==12.2.0
+
+# Production
+gunicorn==23.0.0
+whitenoise==6.8.2
+
+# Dev / Quality (optional)
+django-extensions==3.2.3

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Suppliers{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">Suppliers</h1>
+  {% if user.can_manage_inventory %}
+  <a href="{% url 'suppliers:add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Supplier</a>
+  {% endif %}
+</div>
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto flex gap-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input w-64" placeholder="Search suppliers…">
+    <button class="btn btn-outline">Search</button>
+  </form>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr><th class="table-th">Name</th><th class="table-th">Contact</th><th class="table-th">Email</th><th class="table-th">Phone</th><th class="table-th">GST/VAT</th><th class="table-th text-right">Actions</th></tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for s in suppliers %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td"><a href="{% url 'suppliers:detail' s.pk %}" class="font-medium text-brand-700 hover:underline">{{ s.name }}</a></td>
+          <td class="table-td">{{ s.contact_person|default:"—" }}</td>
+          <td class="table-td text-xs">{{ s.email|default:"—" }}</td>
+          <td class="table-td text-xs">{{ s.phone|default:"—" }}</td>
+          <td class="table-td text-xs">{{ s.gst_number|default:"—" }}</td>
+          <td class="table-td text-right">
+            <a href="{% url 'suppliers:detail' s.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i></a>
+            {% if user.can_manage_inventory %}
+            <a href="{% url 'suppliers:edit' s.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'suppliers:delete' s.pk %}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No suppliers yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

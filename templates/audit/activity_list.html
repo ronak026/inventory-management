@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Activity Log{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Activity Log</h1>
+    <p class="text-gray-500">Audit trail of every create, update and delete.</p>
+  </div>
+</div>
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input w-72" placeholder="Search by record, type or user…">
+    <select name="action" class="form-select w-44">
+      <option value="">All actions</option>
+      <option value="created" {% if request.GET.action == 'created' %}selected{% endif %}>Created</option>
+      <option value="updated" {% if request.GET.action == 'updated' %}selected{% endif %}>Updated</option>
+      <option value="deleted" {% if request.GET.action == 'deleted' %}selected{% endif %}>Deleted</option>
+    </select>
+    <button class="btn btn-outline">Filter</button>
+    <a href="{% url 'audit:log' %}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr><th class="table-th">When</th><th class="table-th">User</th><th class="table-th">Action</th><th class="table-th">Type</th><th class="table-th">Record</th></tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for log in logs %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td whitespace-nowrap text-xs">{{ log.timestamp|date:"d M Y H:i" }}</td>
+          <td class="table-td">{{ log.user.username|default:"system" }}</td>
+          <td class="table-td">
+            {% if log.action == 'created' %}<span class="badge bg-emerald-100 text-emerald-700">Created</span>
+            {% elif log.action == 'updated' %}<span class="badge bg-sky-100 text-sky-700">Updated</span>
+            {% else %}<span class="badge bg-red-100 text-red-700">Deleted</span>{% endif %}
+          </td>
+          <td class="table-td text-gray-500">{{ log.model_name }}</td>
+          <td class="table-td">{{ log.object_repr }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">No activity recorded yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

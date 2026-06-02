@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Delete Product{% endblock %}
+{% block content %}
+<h1 class="mb-6 text-2xl font-bold text-gray-900">Delete Product</h1>
+<div class="card max-w-xl p-6">
+  <p class="mb-4 text-gray-700">Delete <strong>{{ object.name }}</strong> (<code class="text-pink-600">{{ object.sku }}</code>)? This cannot be undone.</p>
+  <form method="post" class="flex gap-2">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, delete</button>
+    <a href="{% url 'products:product_list' %}" class="btn btn-outline">Cancel</a>
+  </form>
+</div>
+{% endblock %}

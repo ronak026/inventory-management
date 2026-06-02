@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1 class="mb-6 text-2xl font-bold text-gray-900">Reports</h1>
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="card p-6 transition hover:-translate-y-1 hover:shadow-md">
+    <i class="bi bi-clipboard-data text-3xl text-brand-600"></i>
+    <h2 class="mt-2 font-semibold text-gray-900">Inventory Report</h2>
+    <p class="mb-3 text-sm text-gray-500">Full product list with stock levels and valuation.</p>
+    <a href="{% url 'reports:view' 'inventory' %}" class="btn btn-primary btn-sm">Open</a>
+  </div>
+  <div class="card p-6 transition hover:-translate-y-1 hover:shadow-md">
+    <i class="bi bi-arrow-left-right text-3xl text-sky-600"></i>
+    <h2 class="mt-2 font-semibold text-gray-900">Stock Movement</h2>
+    <p class="mb-3 text-sm text-gray-500">All stock in/out/adjustments over a date range.</p>
+    <a href="{% url 'reports:view' 'stock-movement' %}" class="btn btn-primary btn-sm">Open</a>
+  </div>
+  <div class="card p-6 transition hover:-translate-y-1 hover:shadow-md">
+    <i class="bi bi-exclamation-triangle text-3xl text-red-600"></i>
+    <h2 class="mt-2 font-semibold text-gray-900">Low Stock</h2>
+    <p class="mb-3 text-sm text-gray-500">Products at or below their reorder level.</p>
+    <a href="{% url 'reports:view' 'low-stock' %}" class="btn btn-primary btn-sm">Open</a>
+  </div>
+  <div class="card p-6 transition hover:-translate-y-1 hover:shadow-md">
+    <i class="bi bi-cart-check text-3xl text-emerald-600"></i>
+    <h2 class="mt-2 font-semibold text-gray-900">Purchase Report</h2>
+    <p class="mb-3 text-sm text-gray-500">Purchase orders by date range and status.</p>
+    <a href="{% url 'reports:view' 'purchase' %}" class="btn btn-primary btn-sm">Open</a>
+  </div>
+</div>
+{% endblock %}

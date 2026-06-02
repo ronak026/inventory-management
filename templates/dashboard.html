@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Dashboard · Inventory{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <p class="text-gray-500">Operational overview of your inventory.</p>
+  </div>
+  <div class="flex gap-2">
+    {% if user.can_record_transactions %}<a href="{% url 'inventory:transaction_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Transaction</a>{% endif %}
+    <a href="{% url 'reports:index' %}" class="btn btn-outline"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a>
+  </div>
+</div>
+
+<!-- Stat cards -->
+<div class="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+  {% include "partials/stat_card.html" with icon="bi-box" color="brand" value=total_products|intcomma label="Total Products" %}
+  {% include "partials/stat_card.html" with icon="bi-tags" color="sky" value=total_categories|intcomma label="Categories" %}
+  {% include "partials/stat_card.html" with icon="bi-truck" color="emerald" value=total_suppliers|intcomma label="Suppliers" %}
+  {% include "partials/stat_card.html" with icon="bi-cash-stack" color="amber" value=total_inventory_value|floatformat:0|intcomma label="Inventory Value" %}
+</div>
+
+<!-- Charts -->
+<div class="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+  <div class="card p-4 xl:col-span-2">
+    <h2 class="mb-3 font-semibold text-gray-800">Stock Movement (last 6 months)</h2>
+    <div class="relative h-72"><canvas id="movementChart"></canvas></div>
+  </div>
+  <div class="card p-4">
+    <h2 class="mb-3 font-semibold text-gray-800">Top Moving Products (30d)</h2>
+    <div class="relative h-72"><canvas id="topMovingChart"></canvas></div>
+  </div>
+  <div class="card p-4 xl:col-span-2">
+    <h2 class="mb-3 font-semibold text-gray-800">Inventory Value Trend</h2>
+    <div class="relative h-64"><canvas id="valueTrendChart"></canvas></div>
+  </div>
+  <div class="card overflow-hidden">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-red-600">
+      <i class="bi bi-exclamation-triangle"></i> Low Stock ({{ low_stock_count }})
+    </div>
+    <div class="max-h-80 divide-y divide-gray-100 overflow-y-auto">
+      {% for product in low_stock_products %}
+      <a href="{% url 'products:product_detail' product.pk %}" class="flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-gray-50">
+        <span class="truncate">{{ product.name }}</span>
+        <span class="badge bg-red-100 text-red-700">{{ product.current_stock }}/{{ product.reorder_level }}</span>
+      </a>
+      {% empty %}
+      <div class="px-4 py-3 text-sm text-gray-500">All products are above reorder level.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Recent transactions -->
+<div class="card overflow-hidden">
+  <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+    <span class="font-semibold text-gray-800">Recent Transactions</span>
+    <a href="{% url 'inventory:transaction_list' %}" class="text-sm text-brand-600 hover:underline">View all</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="table-th">Date</th><th class="table-th">Product</th><th class="table-th">Type</th>
+          <th class="table-th text-right">Qty</th><th class="table-th text-right">Stock After</th><th class="table-th">User</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for t in recent_transactions %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td whitespace-nowrap text-xs">{{ t.created_at|date:"d M Y H:i" }}</td>
+          <td class="table-td">{{ t.product.name }}</td>
+          <td class="table-td">
+            {% if t.transaction_type == 'in' %}<span class="badge bg-emerald-100 text-emerald-700">Stock In</span>
+            {% elif t.transaction_type == 'out' %}<span class="badge bg-red-100 text-red-700">Stock Out</span>
+            {% else %}<span class="badge bg-gray-100 text-gray-600">Adjustment</span>{% endif %}
+          </td>
+          <td class="table-td text-right">{{ t.quantity }}</td>
+          <td class="table-td text-right">{{ t.resulting_stock }}</td>
+          <td class="table-td text-xs">{{ t.user.username|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No transactions yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{ charts|json_script:"chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const CHARTS = JSON.parse(document.getElementById('chart-data').textContent);
+  initDashboardCharts(CHARTS);
+</script>
+{% endblock %}

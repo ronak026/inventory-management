@@ -1,0 +1,64 @@
+{% load static %}
+<header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:px-6">
+  <button @click="sidebarOpen = !sidebarOpen" type="button"
+          class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden">
+    <i class="bi bi-list text-xl"></i>
+  </button>
+
+  <form method="get" action="{% url 'inventory:search' %}" class="relative hidden sm:block">
+    <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"></i>
+    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search…"
+           class="w-56 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 lg:w-72">
+  </form>
+
+  <div class="ml-auto flex items-center gap-2">
+    <!-- Low stock notifications -->
+    <div class="relative" x-data="{ open: false }">
+      <button @click="open = !open" class="relative rounded-lg p-2 text-gray-600 hover:bg-gray-100">
+        <i class="bi bi-bell text-lg"></i>
+        {% if low_stock_total %}
+        <span class="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">{{ low_stock_total }}</span>
+        {% endif %}
+      </button>
+      <div x-show="open" x-cloak @click.outside="open = false"
+           x-transition
+           class="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-gray-200">
+        <div class="border-b border-gray-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Low stock alerts</div>
+        <div class="max-h-80 overflow-y-auto">
+          {% for product in low_stock_items %}
+          <a href="{% url 'products:product_detail' product.pk %}" class="flex items-center justify-between gap-2 px-4 py-2 text-sm hover:bg-gray-50">
+            <span class="truncate">{{ product.name }}</span>
+            <span class="badge bg-red-100 text-red-700">{{ product.current_stock }}</span>
+          </a>
+          {% empty %}
+          <div class="px-4 py-3 text-sm text-gray-500">All stock levels are healthy.</div>
+          {% endfor %}
+        </div>
+        {% if low_stock_total %}
+        <a href="{% url 'reports:view' 'low-stock' %}" class="block border-t border-gray-100 px-4 py-2 text-center text-xs text-brand-600 hover:bg-gray-50">View low stock report</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- User menu -->
+    <div class="relative" x-data="{ open: false }">
+      <button @click="open = !open" class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">{{ user.username|first|upper }}</span>
+        <span class="hidden text-sm font-medium text-gray-700 sm:inline">{{ user.get_full_name|default:user.username }}</span>
+        <i class="bi bi-chevron-down text-xs text-gray-400"></i>
+      </button>
+      <div x-show="open" x-cloak @click.outside="open = false" x-transition
+           class="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl bg-white py-1 shadow-lg ring-1 ring-gray-200">
+        <div class="px-4 py-2 text-xs text-gray-500">{{ user.get_role_display }}</div>
+        <div class="border-t border-gray-100"></div>
+        <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="bi bi-person"></i> My Profile</a>
+        <a href="{% url 'accounts:password_change' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="bi bi-key"></i> Change Password</a>
+        <div class="border-t border-gray-100"></div>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"><i class="bi bi-box-arrow-right"></i> Logout</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</header>

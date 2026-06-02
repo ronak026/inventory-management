@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Category{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'products:category_list' %}" class="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><i class="bi bi-arrow-left"></i> Back to categories</a>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon"><i class="bi bi-tags"></i></div>
+      <div>
+        <h1 class="text-lg font-semibold text-gray-900">{% if object %}Edit Category{% else %}Add Category{% endif %}</h1>
+        <p class="text-sm text-gray-500">Group products for easier browsing and reporting.</p>
+      </div>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-section">{% include "partials/form_fields.html" %}</div>
+      <div class="form-actions">
+        <a href="{% url 'products:category_list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

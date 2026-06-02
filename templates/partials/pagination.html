@@ -1,0 +1,17 @@
+{% if is_paginated %}
+<nav class="mt-4 flex items-center justify-center gap-1 text-sm" aria-label="Pagination">
+  {% if page_obj.has_previous %}
+  <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
+     class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-600 hover:bg-gray-50">&laquo;</a>
+  {% else %}
+  <span class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-gray-300">&laquo;</span>
+  {% endif %}
+  <span class="px-3 py-1.5 text-gray-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
+     class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-600 hover:bg-gray-50">&raquo;</a>
+  {% else %}
+  <span class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-gray-300">&raquo;</span>
+  {% endif %}
+</nav>
+{% endif %}

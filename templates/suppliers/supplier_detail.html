@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ supplier.name }}{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">{{ supplier.name }}</h1>
+  {% if user.can_manage_inventory %}<a href="{% url 'suppliers:edit' supplier.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit</a>{% endif %}
+</div>
+<div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+  <div class="card p-6 md:col-span-2">
+    <dl class="grid grid-cols-2 gap-y-3 text-sm">
+      <dt class="font-medium text-gray-500">Contact Person</dt><dd class="text-gray-800">{{ supplier.contact_person|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Email</dt><dd class="text-gray-800">{{ supplier.email|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Phone</dt><dd class="text-gray-800">{{ supplier.phone|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">GST/VAT</dt><dd class="text-gray-800">{{ supplier.gst_number|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Address</dt><dd class="text-gray-800">{{ supplier.address|default:"—"|linebreaksbr }}</dd>
+      <dt class="font-medium text-gray-500">Status</dt><dd>{% if supplier.is_active %}<span class="badge bg-emerald-100 text-emerald-700">Active</span>{% else %}<span class="badge bg-gray-100 text-gray-600">Inactive</span>{% endif %}</dd>
+    </dl>
+  </div>
+  <div class="card overflow-hidden md:col-span-3">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800">Purchase Orders</div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50"><tr><th class="table-th">PO #</th><th class="table-th">Date</th><th class="table-th">Status</th><th class="table-th text-right">Total</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for po in purchase_orders %}
+          <tr class="hover:bg-gray-50">
+            <td class="table-td"><a href="{% url 'purchases:detail' po.pk %}" class="text-brand-700 hover:underline">{{ po.po_number }}</a></td>
+            <td class="table-td text-xs">{{ po.order_date|date:"d M Y" }}</td>
+            <td class="table-td">{{ po.get_status_display }}</td>
+            <td class="table-td text-right">{{ po.total_amount|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-4 py-5 text-center text-gray-500">No purchase orders.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

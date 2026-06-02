@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Receive · {{ order.po_number }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{{ order.get_absolute_url }}" class="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><i class="bi bi-arrow-left"></i> Back to order</a>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon"><i class="bi bi-box-arrow-in-down"></i></div>
+      <div>
+        <h1 class="text-lg font-semibold text-gray-900">Receive Stock · {{ order.po_number }}</h1>
+        <p class="text-sm text-gray-500">{{ order.supplier.name }} — enter how many units to receive now.</p>
+      </div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-section">
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="border-b border-gray-100">
+                <th class="table-th">Product</th>
+                <th class="table-th text-right">Ordered</th>
+                <th class="table-th text-right">Received</th>
+                <th class="table-th text-right">Outstanding</th>
+                <th class="table-th text-right" style="width:8rem">Receive now</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              {% for item in items %}
+              <tr>
+                <td class="table-td">{{ item.product.name }}</td>
+                <td class="table-td text-right">{{ item.quantity }}</td>
+                <td class="table-td text-right">{{ item.received_quantity }}</td>
+                <td class="table-td text-right font-medium {% if item.outstanding %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ item.outstanding }}</td>
+                <td class="px-2 py-2 text-right">
+                  <input type="number" name="qty_{{ item.id }}" min="0" max="{{ item.outstanding }}"
+                         value="{{ item.outstanding }}" {% if not item.outstanding %}disabled{% endif %}
+                         class="form-input w-24 text-right">
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-3 text-xs text-gray-500"><i class="bi bi-info-circle"></i> Receive fewer than outstanding for a partial receipt — the order stays "Partially Received" until everything is in.</p>
+      </div>
+      <div class="form-actions">
+        <a href="{{ order.get_absolute_url }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" name="receive_all" value="1" class="btn btn-outline"><i class="bi bi-check2-all"></i> Receive all outstanding</button>
+        <button type="submit" class="btn btn-success"><i class="bi bi-box-arrow-in-down"></i> Receive entered quantities</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

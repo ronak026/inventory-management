@@ -1,0 +1,12 @@
+{% comment %}Dashboard KPI card. Params: icon, color (brand|sky|emerald|amber), value, label{% endcomment %}
+<div class="card flex items-center gap-4 border-l-4 p-4
+  {% if color == 'brand' %}border-brand-600{% elif color == 'sky' %}border-sky-500{% elif color == 'emerald' %}border-emerald-500{% else %}border-amber-500{% endif %}">
+  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-xl
+    {% if color == 'brand' %}bg-brand-50 text-brand-600{% elif color == 'sky' %}bg-sky-50 text-sky-600{% elif color == 'emerald' %}bg-emerald-50 text-emerald-600{% else %}bg-amber-50 text-amber-600{% endif %}">
+    <i class="bi {{ icon }}"></i>
+  </div>
+  <div>
+    <div class="text-2xl font-bold text-gray-900">{{ value }}</div>
+    <div class="text-sm text-gray-500">{{ label }}</div>
+  </div>
+</div>

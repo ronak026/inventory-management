@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Product{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'products:product_list' %}" class="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><i class="bi bi-arrow-left"></i> Back to products</a>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon"><i class="bi bi-box-seam"></i></div>
+      <div>
+        <h1 class="text-lg font-semibold text-gray-900">{% if object %}Edit Product{% else %}Add Product{% endif %}</h1>
+        <p class="text-sm text-gray-500">Catalog details, pricing and stock settings.</p>
+      </div>
+    </div>
+    <form method="post" enctype="multipart/form-data" novalidate class="form-auto">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="mx-6 mt-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <i class="bi bi-exclamation-triangle-fill mt-0.5"></i><div>{{ form.non_field_errors }}</div>
+      </div>
+      {% endif %}
+
+      <div class="form-section">
+        <p class="form-section-title"><i class="bi bi-card-text"></i> Basic Information</p>
+        {% include "partials/field.html" with field=form.name %}
+        <div class="grid grid-cols-1 gap-x-5 md:grid-cols-3">
+          {% include "partials/field.html" with field=form.sku %}
+          {% include "partials/field.html" with field=form.barcode %}
+          {% include "partials/field.html" with field=form.category %}
+        </div>
+        {% include "partials/field.html" with field=form.description %}
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title"><i class="bi bi-cash-coin"></i> Pricing &amp; Units</p>
+        <div class="grid grid-cols-1 gap-x-5 md:grid-cols-3">
+          {% include "partials/field.html" with field=form.unit %}
+          {% include "partials/field.html" with field=form.purchase_price %}
+          {% include "partials/field.html" with field=form.selling_price %}
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title"><i class="bi bi-sliders"></i> Stock &amp; Status</p>
+        <div class="grid grid-cols-1 gap-x-5 md:grid-cols-2">
+          {% include "partials/field.html" with field=form.reorder_level %}
+          {% include "partials/field.html" with field=form.status %}
+        </div>
+        {% if object %}<p class="mb-4 text-xs text-gray-500"><i class="bi bi-info-circle"></i> Current stock is changed via stock transactions, not here.</p>{% endif %}
+        {% include "partials/field.html" with field=form.image %}
+      </div>
+
+      <div class="form-actions">
+        <a href="{% url 'products:product_list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

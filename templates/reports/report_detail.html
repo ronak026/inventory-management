@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+    <p class="text-gray-500">
+      <span class="font-medium text-gray-700">{{ row_count }}</span> row{{ row_count|pluralize }}
+      {% if range_start or range_end %}
+      · <span class="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">{{ range_start|date:"d M Y"|default:"earliest" }} → {{ range_end|date:"d M Y"|default:"today" }}</span>
+      {% else %}· <span class="text-xs">all dates</span>{% endif %}
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'reports:export' slug 'excel' %}?{{ query_string }}" class="btn btn-outline"><i class="bi bi-file-earmark-excel text-emerald-600"></i> Excel</a>
+    <a href="{% url 'reports:export' slug 'csv' %}?{{ query_string }}" class="btn btn-outline"><i class="bi bi-filetype-csv"></i> CSV</a>
+    <a href="{% url 'reports:export' slug 'pdf' %}?{{ query_string }}" class="btn btn-outline"><i class="bi bi-file-earmark-pdf text-red-600"></i> PDF</a>
+  </div>
+</div>
+
+{% if slug == 'stock-movement' or slug == 'purchase' or slug == 'inventory' %}
+<div class="card mb-4 p-4">
+  {% with p=request.GET.period typ=request.GET.type sts=request.GET.status %}
+  {% comment %}Preserve the active type/status filter when switching ranges.{% endcomment %}
+  <div class="mb-3">
+    <span class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-400">Quick range</span>
+    <div class="flex flex-wrap gap-2">
+      <a href="?period=7{% if typ %}&type={{ typ }}{% endif %}{% if sts %}&status={{ sts }}{% endif %}" class="btn btn-sm {% if p == '7' %}btn-primary{% else %}btn-outline{% endif %}">Last 7 days</a>
+      <a href="?period=15{% if typ %}&type={{ typ }}{% endif %}{% if sts %}&status={{ sts }}{% endif %}" class="btn btn-sm {% if p == '15' %}btn-primary{% else %}btn-outline{% endif %}">Last 15 days</a>
+      <a href="?period=30{% if typ %}&type={{ typ }}{% endif %}{% if sts %}&status={{ sts }}{% endif %}" class="btn btn-sm {% if p == '30' %}btn-primary{% else %}btn-outline{% endif %}">Last 30 days</a>
+      <a href="?period=90{% if typ %}&type={{ typ }}{% endif %}{% if sts %}&status={{ sts }}{% endif %}" class="btn btn-sm {% if p == '90' %}btn-primary{% else %}btn-outline{% endif %}">Last 90 days</a>
+      <a href="?period=month{% if typ %}&type={{ typ }}{% endif %}{% if sts %}&status={{ sts }}{% endif %}" class="btn btn-sm {% if p == 'month' %}btn-primary{% else %}btn-outline{% endif %}">This month</a>
+      <a href="{% url 'reports:view' slug %}{% if typ %}?type={{ typ }}{% endif %}{% if sts %}?status={{ sts }}{% endif %}" class="btn btn-sm {% if not p and not request.GET.start %}btn-primary{% else %}btn-outline{% endif %}">All time</a>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-end gap-4 border-t border-gray-100 pt-3">
+    <form method="get" class="form-auto flex flex-wrap items-end gap-2">
+      <div><label class="label">From</label><input type="date" name="start" value="{{ request.GET.start }}" class="form-input"></div>
+      <div><label class="label">To</label><input type="date" name="end" value="{{ request.GET.end }}" class="form-input"></div>
+      {% if typ %}<input type="hidden" name="type" value="{{ typ }}">{% endif %}
+      {% if sts %}<input type="hidden" name="status" value="{{ sts }}">{% endif %}
+      <button class="btn btn-outline">Apply custom range</button>
+    </form>
+
+    {% if slug == 'stock-movement' %}
+    <form method="get" class="form-auto">
+      <label class="label">Movement type</label>
+      {% if p %}<input type="hidden" name="period" value="{{ p }}">{% endif %}
+      {% if request.GET.start %}<input type="hidden" name="start" value="{{ request.GET.start }}">{% endif %}
+      {% if request.GET.end %}<input type="hidden" name="end" value="{{ request.GET.end }}">{% endif %}
+      <select name="type" class="form-select" onchange="this.form.submit()">
+        <option value="">All movements</option>
+        <option value="in" {% if typ == 'in' %}selected{% endif %}>Stock In (arrivals)</option>
+        <option value="out" {% if typ == 'out' %}selected{% endif %}>Stock Out</option>
+        <option value="adjust" {% if typ == 'adjust' %}selected{% endif %}>Adjustment</option>
+      </select>
+    </form>
+    {% endif %}
+
+    {% if slug == 'purchase' %}
+    <form method="get" class="form-auto">
+      <label class="label">Status</label>
+      {% if p %}<input type="hidden" name="period" value="{{ p }}">{% endif %}
+      {% if request.GET.start %}<input type="hidden" name="start" value="{{ request.GET.start }}">{% endif %}
+      {% if request.GET.end %}<input type="hidden" name="end" value="{{ request.GET.end }}">{% endif %}
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        <option value="draft" {% if sts == 'draft' %}selected{% endif %}>Draft</option>
+        <option value="ordered" {% if sts == 'ordered' %}selected{% endif %}>Ordered</option>
+        <option value="partial" {% if sts == 'partial' %}selected{% endif %}>Partially Received</option>
+        <option value="received" {% if sts == 'received' %}selected{% endif %}>Received</option>
+        <option value="cancelled" {% if sts == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+    </form>
+    {% endif %}
+  </div>
+  <p class="mt-2 text-xs text-gray-500"><i class="bi bi-info-circle"></i> Pick a quick range (and type), then use Excel / CSV / PDF — exports use the same filters.</p>
+  {% endwith %}
+</div>
+{% endif %}
+
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr>{% for h in headers %}<th class="table-th">{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for row in rows %}
+        <tr class="hover:bg-gray-50">{% for cell in row %}<td class="table-td">{{ cell }}</td>{% endfor %}</tr>
+        {% empty %}
+        <tr><td colspan="{{ headers|length }}" class="px-4 py-6 text-center text-gray-500">No data for the selected criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

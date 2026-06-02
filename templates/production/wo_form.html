@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{% if order %}Edit{% else %}New{% endif %} Work Order{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <a href="{% url 'production:wo_list' %}" class="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"><i class="bi bi-arrow-left"></i> Back to work orders</a>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon"><i class="bi bi-tools"></i></div>
+      <div>
+        <h1 class="text-lg font-semibold text-gray-900">{% if order %}Edit Work Order{% else %}New Work Order{% endif %}</h1>
+        <p class="text-sm text-gray-500">Components are filled from the product's Bill of Materials.</p>
+      </div>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-section">{% include "partials/form_fields.html" %}</div>
+      <div class="form-actions">
+        <a href="{% url 'production:wo_list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Work Order</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

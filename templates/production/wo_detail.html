@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ order.wo_number }}{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-bold text-gray-900">{{ order.wo_number }}</h1>
+      {% include "production/_status_badge.html" with status=order.status %}
+    </div>
+    <p class="text-gray-500">{{ order.get_wo_type_display }} · {{ order.product.name }} × {{ order.quantity }}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <!-- Planner actions -->
+    {% if user.can_plan_production and order.is_editable %}
+    <a href="{% url 'production:wo_edit' order.pk %}" class="btn btn-outline"><i class="bi bi-pencil"></i> Edit</a>
+    {% endif %}
+    {% if user.can_plan_production and order.can_release %}
+    <form method="post" action="{% url 'production:wo_release' order.pk %}">{% csrf_token %}
+      <button class="btn btn-primary"><i class="bi bi-lock"></i> Release &amp; Reserve</button>
+    </form>
+    {% endif %}
+    <!-- Technician actions -->
+    {% if user.can_execute_production and order.can_start %}
+    <form method="post" action="{% url 'production:wo_start' order.pk %}">{% csrf_token %}
+      <button class="btn btn-outline"><i class="bi bi-play"></i> Start</button>
+    </form>
+    {% endif %}
+    {% if user.can_execute_production and order.can_complete %}
+    <form method="post" action="{% url 'production:wo_complete' order.pk %}" onsubmit="return confirm('Complete this order? Components will be consumed and finished stock produced.');">{% csrf_token %}
+      <button class="btn btn-success"><i class="bi bi-check2-all"></i> Complete</button>
+    </form>
+    {% endif %}
+    {% if user.can_plan_production and order.can_cancel %}
+    <form method="post" action="{% url 'production:wo_cancel' order.pk %}" onsubmit="return confirm('Cancel this work order and release reservations?');">{% csrf_token %}
+      <button class="btn btn-outline"><i class="bi bi-x-circle"></i> Cancel</button>
+    </form>
+    {% endif %}
+    {% if user.can_plan_production %}<a href="{% url 'production:wo_delete' order.pk %}" class="btn btn-danger"><i class="bi bi-trash"></i></a>{% endif %}
+  </div>
+</div>
+
+{% if order.shortages and order.status == 'draft' %}
+<div class="mb-5 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+  <i class="bi bi-exclamation-triangle-fill mt-0.5"></i>
+  <div><strong>Component shortage.</strong> Some components don't have enough available stock to release this order. Restock or adjust quantity.</div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+  <div class="card p-6">
+    <dl class="grid grid-cols-2 gap-y-3 text-sm">
+      <dt class="font-medium text-gray-500">Type</dt><dd class="text-right text-gray-800">{{ order.get_wo_type_display }}</dd>
+      <dt class="font-medium text-gray-500">Quantity</dt><dd class="text-right text-gray-800">{{ order.quantity }}</dd>
+      <dt class="font-medium text-gray-500">Created by</dt><dd class="text-right text-gray-800">{{ order.created_by.username|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Assigned to</dt><dd class="text-right text-gray-800">{{ order.assigned_to.username|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Due</dt><dd class="text-right text-gray-800">{{ order.due_date|date:"d M Y"|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Reserved</dt><dd class="text-right text-gray-800">{% if order.reserved %}<i class="bi bi-check-circle text-emerald-500"></i>{% else %}—{% endif %}</dd>
+    </dl>
+
+    {% if user.can_supervise_production and order.status != 'completed' and order.status != 'cancelled' %}
+    <form method="post" action="{% url 'production:wo_assign' order.pk %}" class="form-auto mt-4 border-t border-gray-100 pt-4">
+      {% csrf_token %}
+      <label class="label">{{ assign_form.assigned_to.label }}</label>
+      <div class="flex gap-2">
+        {{ assign_form.assigned_to }}
+        <button class="btn btn-primary btn-sm"><i class="bi bi-person-check"></i></button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card overflow-hidden lg:col-span-2">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800">Components Required</div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50"><tr><th class="table-th">Component</th><th class="table-th text-right">Required</th><th class="table-th text-right">Available</th><th class="table-th text-right">Consumed</th><th class="table-th">Status</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for c in order.components.all %}
+          <tr>
+            <td class="table-td">{{ c.component.name }}</td>
+            <td class="table-td text-right">{{ c.required_quantity }}</td>
+            <td class="table-td text-right">{{ c.available }}</td>
+            <td class="table-td text-right">{{ c.consumed_quantity }}</td>
+            <td class="table-td">{% if c.is_short %}<span class="badge bg-red-100 text-red-700">Short</span>{% else %}<span class="badge bg-emerald-100 text-emerald-700">OK</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="px-4 py-5 text-center text-gray-500">
+            No components.
+            {% if user.can_plan_production %}<a href="{% url 'production:bom_edit' order.product.pk %}" class="text-brand-600 hover:underline">Add a Bill of Materials</a> for {{ order.product.name }}.{% endif %}
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% if order.notes %}<div class="card mt-4 p-6"><h2 class="mb-2 font-semibold text-gray-800">Notes</h2><p class="text-gray-600">{{ order.notes|linebreaksbr }}</p></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base_auth.html" %}
+{% load static %}
+{% block title %}Register · Inventory{% endblock %}
+{% block subtitle %}Create an account{% endblock %}
+{% block content %}
+<form method="post" novalidate class="space-y-4"
+      x-data="{
+        username: '{{ form.username.value|default:''|escapejs }}',
+        email: '{{ form.email.value|default:''|escapejs }}',
+        password: '', confirm: '',
+        get userLen() { return this.username.length >= 3; },
+        get userChars() { return this.username.length === 0 || /^[\w.@+-]+$/.test(this.username); },
+        get userOk() { return this.userLen && this.userChars; },
+        get emailOk() { return this.email.length === 0 || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.email); },
+        get lenOk() { return this.password.length >= 8; },
+        get notNumeric() { return this.password.length > 0 && !/^[0-9]+$/.test(this.password); },
+        get hasLetter() { return /[a-zA-Z]/.test(this.password); },
+        get pwOk() { return this.lenOk && this.notNumeric; },
+        get matchOk() { return this.confirm.length > 0 && this.password === this.confirm; },
+      }">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <!-- Username -->
+  <div>
+    <label class="label">Username <span class="text-red-500">*</span></label>
+    <input type="text" name="username" x-model="username" required maxlength="150"
+           placeholder="Choose a username"
+           class="form-input"
+           :class="username.length && !userOk ? 'border-red-400 focus:ring-red-500/30' : (userOk && username.length ? 'border-emerald-400' : '')">
+    <p x-show="username.length > 0 && !userLen" x-cloak class="field-error"><i class="bi bi-exclamation-circle"></i> Username must be at least 3 characters.</p>
+    <p x-show="username.length > 0 && !userChars" x-cloak class="field-error"><i class="bi bi-exclamation-circle"></i> Use only letters, digits and @ . + - _</p>
+    {% for e in form.username.errors %}<p class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</p>{% endfor %}
+  </div>
+
+  <!-- Names -->
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="label">First name</label>
+      <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" class="form-input" placeholder="First">
+    </div>
+    <div>
+      <label class="label">Last name</label>
+      <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" class="form-input" placeholder="Last">
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div>
+    <label class="label">Email <span class="text-red-500">*</span></label>
+    <input type="email" name="email" x-model="email" required placeholder="you@example.com"
+           class="form-input"
+           :class="email.length && !emailOk ? 'border-red-400 focus:ring-red-500/30' : (emailOk && email.length ? 'border-emerald-400' : '')">
+    <p x-show="email.length > 0 && !emailOk" x-cloak class="field-error"><i class="bi bi-exclamation-circle"></i> Enter a valid email address.</p>
+    {% for e in form.email.errors %}<p class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</p>{% endfor %}
+  </div>
+
+  <!-- Password -->
+  <div>
+    <label class="label">Password <span class="text-red-500">*</span></label>
+    <input type="password" name="password1" x-model="password" required placeholder="••••••••"
+           class="form-input"
+           :class="password.length && !pwOk ? 'border-red-400 focus:ring-red-500/30' : (pwOk ? 'border-emerald-400' : '')">
+    <!-- Live rule checklist (only once typing starts) -->
+    <div x-show="password.length > 0" x-cloak class="mt-2 space-y-1 text-xs">
+      <p :class="lenOk ? 'text-emerald-600' : 'text-red-600'">
+        <i class="bi" :class="lenOk ? 'bi-check-circle' : 'bi-x-circle'"></i> At least 8 characters
+      </p>
+      <p :class="notNumeric ? 'text-emerald-600' : 'text-red-600'">
+        <i class="bi" :class="notNumeric ? 'bi-check-circle' : 'bi-x-circle'"></i> Not entirely numbers
+      </p>
+      <p :class="hasLetter ? 'text-emerald-600' : 'text-gray-400'">
+        <i class="bi" :class="hasLetter ? 'bi-check-circle' : 'bi-dot'"></i> Contains a letter (recommended)
+      </p>
+    </div>
+    {% for e in form.password1.errors %}<p class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</p>{% endfor %}
+  </div>
+
+  <!-- Confirm -->
+  <div>
+    <label class="label">Confirm password <span class="text-red-500">*</span></label>
+    <input type="password" name="password2" x-model="confirm" required placeholder="••••••••"
+           class="form-input"
+           :class="confirm.length && !matchOk ? 'border-red-400 focus:ring-red-500/30' : (matchOk ? 'border-emerald-400' : '')">
+    <p x-show="confirm.length > 0 && !matchOk" x-cloak class="field-error"><i class="bi bi-exclamation-circle"></i> Passwords do not match.</p>
+    <p x-show="matchOk" x-cloak class="mt-1.5 flex items-center gap-1 text-xs font-medium text-emerald-600"><i class="bi bi-check-circle"></i> Passwords match.</p>
+    {% for e in form.password2.errors %}<p class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</p>{% endfor %}
+  </div>
+
+  <button type="submit" class="btn btn-primary w-full"
+          :class="(userOk && emailOk && pwOk && matchOk) ? '' : 'opacity-60'">
+    <i class="bi bi-person-plus"></i> Create account
+  </button>
+  <p class="pt-1 text-center text-xs text-gray-500"><i class="bi bi-info-circle"></i> New accounts need administrator approval before the first sign-in.</p>
+  <div class="text-center">
+    <a href="{% url 'accounts:login' %}" class="text-sm text-brand-600 hover:underline">Already have an account? Sign in</a>
+  </div>
+</form>
+{% endblock %}

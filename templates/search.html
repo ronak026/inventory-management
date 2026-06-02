@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">Search</h1>
+  {% if q %}<p class="text-gray-500">{{ total }} result{{ total|pluralize }} for "<span class="font-medium">{{ q }}</span>"</p>{% endif %}
+</div>
+
+<form method="get" action="{% url 'inventory:search' %}" class="card mb-5 p-4">
+  <div class="relative">
+    <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+    <input type="text" name="q" value="{{ q }}" autofocus class="form-input pl-10" placeholder="Search products, suppliers, purchase orders, transactions…">
+  </div>
+</form>
+
+{% if q %}
+<div class="space-y-5">
+  <div class="card overflow-hidden">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800"><i class="bi bi-box text-brand-600"></i> Products ({{ products|length }})</div>
+    <div class="divide-y divide-gray-100">
+      {% for p in products %}
+      <a href="{% url 'products:product_detail' p.pk %}" class="flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50">
+        <span>{{ p.name }} <code class="ml-1 text-xs text-pink-600">{{ p.sku }}</code></span>
+        <span class="text-gray-400">{{ p.category.name }}</span>
+      </a>
+      {% empty %}<div class="px-4 py-3 text-sm text-gray-400">No matching products.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="card overflow-hidden">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800"><i class="bi bi-truck text-emerald-600"></i> Suppliers ({{ suppliers|length }})</div>
+    <div class="divide-y divide-gray-100">
+      {% for s in suppliers %}
+      <a href="{% url 'suppliers:detail' s.pk %}" class="block px-4 py-2.5 text-sm hover:bg-gray-50">{{ s.name }} <span class="text-gray-400">· {{ s.contact_person|default:s.email }}</span></a>
+      {% empty %}<div class="px-4 py-3 text-sm text-gray-400">No matching suppliers.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="card overflow-hidden">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800"><i class="bi bi-cart-plus text-sky-600"></i> Purchase Orders ({{ purchases|length }})</div>
+    <div class="divide-y divide-gray-100">
+      {% for o in purchases %}
+      <a href="{% url 'purchases:detail' o.pk %}" class="flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50"><span>{{ o.po_number }}</span><span class="text-gray-400">{{ o.supplier.name }}</span></a>
+      {% empty %}<div class="px-4 py-3 text-sm text-gray-400">No matching purchase orders.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="card overflow-hidden">
+    <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800"><i class="bi bi-arrow-left-right text-amber-600"></i> Transactions ({{ transactions|length }})</div>
+    <div class="divide-y divide-gray-100">
+      {% for t in transactions %}
+      <div class="flex items-center justify-between px-4 py-2.5 text-sm"><span>{{ t.product.name }} · {{ t.get_transaction_type_display }}</span><span class="text-gray-400">{{ t.created_at|date:"d M Y" }}</span></div>
+      {% empty %}<div class="px-4 py-3 text-sm text-gray-400">No matching transactions.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% else %}
+<p class="text-gray-500">Type a search term above to look across the whole system.</p>
+{% endif %}
+{% endblock %}

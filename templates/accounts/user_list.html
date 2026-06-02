@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Users & Roles{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">Users &amp; Roles</h1>
+  <a href="{% url 'accounts:user_add' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add User</a>
+</div>
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input w-64" placeholder="Search users…">
+    <select name="role" class="form-select w-48">
+      <option value="">All roles</option>
+      <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>Admin</option>
+      <option value="manager" {% if request.GET.role == 'manager' %}selected{% endif %}>Inventory Manager</option>
+      <option value="staff" {% if request.GET.role == 'staff' %}selected{% endif %}>Staff</option>
+    </select>
+    <button class="btn btn-outline">Filter</button>
+  </form>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr><th class="table-th">Username</th><th class="table-th">Name</th><th class="table-th">Email</th><th class="table-th">Role</th><th class="table-th">Active</th><th class="table-th text-right">Actions</th></tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for u in users %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td font-medium">{{ u.username }}</td>
+          <td class="table-td">{{ u.get_full_name|default:"—" }}</td>
+          <td class="table-td">{{ u.email|default:"—" }}</td>
+          <td class="table-td"><span class="badge bg-brand-50 text-brand-700">{{ u.get_role_display }}</span></td>
+          <td class="table-td">
+            {% if u.is_active %}<i class="bi bi-check-circle text-emerald-500"></i>
+            {% else %}<span class="badge bg-amber-100 text-amber-700">Pending approval</span>{% endif %}
+          </td>
+          <td class="table-td text-right">
+            {% if not u.is_active %}
+            <form method="post" action="{% url 'accounts:user_approve' u.pk %}" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Approve</button>
+            </form>
+            {% endif %}
+            <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i></a>
+            {% if u != request.user %}
+            <a href="{% url 'accounts:user_delete' u.pk %}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Work Orders{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">Work Orders</h1>
+  {% if user.can_plan_production %}
+  <a href="{% url 'production:wo_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Work Order</a>
+  {% endif %}
+</div>
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input w-64" placeholder="SWO number / product…">
+    <select name="status" class="form-select w-52">
+      <option value="">All statuses</option>
+      {% for value, label in statuses %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <label class="flex items-center gap-2 text-sm text-gray-600"><input type="checkbox" name="mine" value="1" class="form-check" {% if request.GET.mine %}checked{% endif %}> Assigned to me</label>
+    <button class="btn btn-outline">Filter</button>
+    <a href="{% url 'production:wo_list' %}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr><th class="table-th">SWO #</th><th class="table-th">Product</th><th class="table-th">Type</th><th class="table-th text-right">Qty</th><th class="table-th">Status</th><th class="table-th">Assigned</th><th class="table-th text-right">Actions</th></tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for o in orders %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td"><a href="{{ o.get_absolute_url }}" class="font-medium text-brand-700 hover:underline">{{ o.wo_number }}</a></td>
+          <td class="table-td">{{ o.product.name }}</td>
+          <td class="table-td text-xs">{% if o.wo_type == 'assembly' %}Assembly{% else %}Service{% endif %}</td>
+          <td class="table-td text-right">{{ o.quantity }}</td>
+          <td class="table-td">{% include "production/_status_badge.html" with status=o.status %}</td>
+          <td class="table-td text-xs">{{ o.assigned_to.username|default:"—" }}</td>
+          <td class="table-td text-right"><a href="{{ o.get_absolute_url }}" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-500">No work orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

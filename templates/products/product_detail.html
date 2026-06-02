@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">{{ product.name }}</h1>
+    <p class="text-gray-500"><code class="text-pink-600">{{ product.sku }}</code> · {{ product.category.name }}</p>
+  </div>
+  <div class="flex gap-2">
+    {% if user.can_manage_inventory %}<a href="{% url 'products:product_edit' product.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit</a>{% endif %}
+    {% if user.can_record_transactions %}<a href="{% url 'inventory:transaction_add' %}" class="btn btn-outline"><i class="bi bi-arrow-left-right"></i> New Transaction</a>{% endif %}
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+  <div class="card p-6 text-center">
+    {% if product.image %}<img src="{{ product.image.url }}" class="mb-3 w-full rounded-lg object-cover" alt="{{ product.name }}">{% endif %}
+    <div class="text-5xl font-bold {% if product.is_low_stock %}text-red-600{% else %}text-emerald-600{% endif %}">{{ product.current_stock }}</div>
+    <div class="text-gray-500">{{ product.get_unit_display }} in stock</div>
+    {% if product.is_low_stock %}<span class="badge mt-2 bg-red-600 text-white">Below reorder level ({{ product.reorder_level }})</span>{% endif %}
+    {% if product.reserved_stock %}
+    <div class="mt-3 border-t border-gray-100 pt-3 text-sm">
+      <div class="flex justify-between"><span class="text-gray-500">Reserved</span><span class="font-medium text-amber-600">{{ product.reserved_stock }}</span></div>
+      <div class="flex justify-between"><span class="text-gray-500">Available</span><span class="font-medium text-gray-800">{{ product.available_stock }}</span></div>
+    </div>
+    {% endif %}
+    {% if user.can_plan_production %}
+    <a href="{% url 'production:bom_edit' product.pk %}" class="btn btn-outline btn-sm mt-4 w-full">
+      <i class="bi bi-diagram-3"></i> {% if product.has_bom %}Edit{% else %}Add{% endif %} Bill of Materials
+    </a>
+    {% endif %}
+  </div>
+  <div class="card p-6 md:col-span-2">
+    <dl class="grid grid-cols-3 gap-y-3 text-sm">
+      <dt class="font-medium text-gray-500">Barcode</dt><dd class="col-span-2 text-gray-800">{{ product.barcode|default:"—" }}</dd>
+      <dt class="font-medium text-gray-500">Status</dt><dd class="col-span-2 text-gray-800">{{ product.get_status_display }}</dd>
+      <dt class="font-medium text-gray-500">Purchase Price</dt><dd class="col-span-2 text-gray-800">{{ product.purchase_price|intcomma }}</dd>
+      <dt class="font-medium text-gray-500">Selling Price</dt><dd class="col-span-2 text-gray-800">{{ product.selling_price|intcomma }}</dd>
+      <dt class="font-medium text-gray-500">Reorder Level</dt><dd class="col-span-2 text-gray-800">{{ product.reorder_level }}</dd>
+      <dt class="font-medium text-gray-500">Stock Value</dt><dd class="col-span-2 text-gray-800">{{ product.stock_value|floatformat:2|intcomma }}</dd>
+      <dt class="font-medium text-gray-500">Description</dt><dd class="col-span-2 text-gray-800">{{ product.description|default:"—"|linebreaksbr }}</dd>
+      <dt class="font-medium text-gray-500">Created</dt><dd class="col-span-2 text-gray-800">{{ product.created_at|date:"d M Y" }}</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card mt-4 overflow-hidden">
+  <div class="border-b border-gray-100 px-4 py-3 font-semibold text-gray-800">Recent Stock Movements</div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr><th class="table-th">Date</th><th class="table-th">Type</th><th class="table-th text-right">Change</th><th class="table-th text-right">Stock After</th><th class="table-th">Ref</th><th class="table-th">User</th></tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for t in transactions %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td whitespace-nowrap text-xs">{{ t.created_at|date:"d M Y H:i" }}</td>
+          <td class="table-td">{{ t.get_transaction_type_display }}</td>
+          <td class="table-td text-right {% if t.quantity_change < 0 %}text-red-600{% else %}text-emerald-600{% endif %}">{{ t.quantity_change }}</td>
+          <td class="table-td text-right">{{ t.resulting_stock }}</td>
+          <td class="table-td text-xs">{{ t.reference_number|default:"—" }}</td>
+          <td class="table-td text-xs">{{ t.user.username|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-5 text-center text-gray-500">No movements recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

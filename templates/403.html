@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Access Denied{% endblock %}
+{% block content %}
+<div class="py-16 text-center">
+  <i class="bi bi-shield-lock text-6xl text-red-500"></i>
+  <h1 class="mt-4 text-2xl font-bold text-gray-900">403 — Access Denied</h1>
+  <p class="mt-1 text-gray-500">You don't have permission to perform this action.</p>
+  <a href="{% url 'inventory:dashboard' %}" class="btn btn-primary mt-4">Back to Dashboard</a>
+</div>
+{% endblock %}

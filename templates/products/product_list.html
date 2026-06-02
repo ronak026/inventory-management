@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">Products</h1>
+  {% if user.can_manage_inventory %}
+  <a href="{% url 'products:product_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Product</a>
+  {% endif %}
+</div>
+
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input lg:col-span-2" placeholder="Name / SKU / barcode…">
+    <select name="category" class="form-select">
+      <option value="">All categories</option>
+      {% for c in categories %}<option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+    <select name="status" class="form-select">
+      <option value="">Any status</option>
+      <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+      <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+      <option value="discontinued" {% if request.GET.status == 'discontinued' %}selected{% endif %}>Discontinued</option>
+    </select>
+    <select name="stock" class="form-select">
+      <option value="">All stock</option>
+      <option value="low" {% if request.GET.stock == 'low' %}selected{% endif %}>Low stock</option>
+      <option value="out" {% if request.GET.stock == 'out' %}selected{% endif %}>Out of stock</option>
+      <option value="in" {% if request.GET.stock == 'in' %}selected{% endif %}>In stock</option>
+    </select>
+    <div class="flex gap-2">
+      <button class="btn btn-outline flex-1">Filter</button>
+      <a href="{% url 'products:product_list' %}" class="btn btn-outline">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr><th class="table-th">SKU</th><th class="table-th">Product</th><th class="table-th">Category</th><th class="table-th text-right">Stock</th><th class="table-th text-right">Price</th><th class="table-th">Status</th><th class="table-th text-right">Actions</th></tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for product in products %}
+        <tr class="hover:bg-gray-50 {% if product.is_low_stock %}bg-amber-50/60{% endif %}">
+          <td class="table-td"><code class="text-xs text-pink-600">{{ product.sku }}</code></td>
+          <td class="table-td"><a href="{% url 'products:product_detail' product.pk %}" class="font-medium text-brand-700 hover:underline">{{ product.name }}</a></td>
+          <td class="table-td">{{ product.category.name }}</td>
+          <td class="table-td text-right">
+            {{ product.current_stock }} {{ product.get_unit_display|lower }}
+            {% if product.is_low_stock %}<i class="bi bi-exclamation-triangle text-red-500" title="Low stock"></i>{% endif %}
+          </td>
+          <td class="table-td text-right">{{ product.selling_price|floatformat:2|intcomma }}</td>
+          <td class="table-td">
+            {% if product.status == 'active' %}<span class="badge bg-emerald-100 text-emerald-700">Active</span>
+            {% elif product.status == 'inactive' %}<span class="badge bg-gray-100 text-gray-600">Inactive</span>
+            {% else %}<span class="badge bg-slate-200 text-slate-700">Discontinued</span>{% endif %}
+          </td>
+          <td class="table-td text-right">
+            <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i></a>
+            {% if user.can_manage_inventory %}
+            <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'products:product_delete' product.pk %}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-500">No products found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

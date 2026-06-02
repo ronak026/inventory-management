@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Stock Transactions{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">Stock Transactions</h1>
+  {% if user.can_record_transactions %}<a href="{% url 'inventory:transaction_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Transaction</a>{% endif %}
+</div>
+<div class="card mb-4 p-4">
+  <form method="get" class="form-auto flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-input w-72" placeholder="Product / SKU / reference…">
+    <select name="type" class="form-select w-48">
+      <option value="">All types</option>
+      {% for value, label in transaction_types %}<option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-outline">Filter</button>
+    <a href="{% url 'inventory:transaction_list' %}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50"><tr><th class="table-th">Date</th><th class="table-th">Product</th><th class="table-th">Type</th><th class="table-th text-right">Qty</th><th class="table-th text-right">Change</th><th class="table-th text-right">Stock After</th><th class="table-th">Reference</th><th class="table-th">User</th></tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for t in transactions %}
+        <tr class="hover:bg-gray-50">
+          <td class="table-td whitespace-nowrap text-xs">{{ t.created_at|date:"d M Y H:i" }}</td>
+          <td class="table-td">{{ t.product.name }}</td>
+          <td class="table-td">
+            {% if t.transaction_type == 'in' %}<span class="badge bg-emerald-100 text-emerald-700">Stock In</span>
+            {% elif t.transaction_type == 'out' %}<span class="badge bg-red-100 text-red-700">Stock Out</span>
+            {% else %}<span class="badge bg-gray-100 text-gray-600">Adjustment</span>{% endif %}
+          </td>
+          <td class="table-td text-right">{{ t.quantity }}</td>
+          <td class="table-td text-right {% if t.quantity_change < 0 %}text-red-600{% else %}text-emerald-600{% endif %}">{{ t.quantity_change }}</td>
+          <td class="table-td text-right">{{ t.resulting_stock }}</td>
+          <td class="table-td text-xs">{{ t.reference_number|default:"—" }}</td>
+          <td class="table-td text-xs">{{ t.user.username|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="px-4 py-6 text-center text-gray-500">No transactions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}
